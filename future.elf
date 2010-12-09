@@ -1,0 +1,27 @@
+% p ::= e (e N) ...   (where N ranges over nats) 
+
+% threads is a list of threads in the program. 
+% a thread is an exp * nat pair, where the nat is the future id.
+thread 	: type. 
+mkthread : expr -> nat -> thread. 
+threads : type. 
+nothreads : threads.  % empty thread list 
+consthreads : thread -> threads -> threads. 
+
+
+prog : type. 
+mkprog : exps -> threads -> prog. 
+progstep : prog -> prog -> type. 
+exprstep : expr -> threads -> expr -> thread -> type. 
+
+% These rules indicate that for a given expression and 
+% thread expression, we can either take a step in evaluating 
+% the expr on the main thread, or take a step in evaluating 
+% the one on the other thread.
+threadstep 	: EM (E0 0)  EM (E0' 0) 
+		<- E0 E0' 
+mainstep 	: EM (E0 0) EM' (E0 0) 
+		<- EM EM'	
+
+ev_future : 
+ev_touch : 
