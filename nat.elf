@@ -1,0 +1,14 @@
+% Signatures
+nat : type. 
+
+z : nat. 
+s : nat -> nat.
+
+
+plus : nat -> nat -> nat -> type. 
+
+plus_zero : {M:nat} plus M z M. 
+
+plus_succ : {M:nat} {N:nat} {P:nat} 
+            plus M (s N) (s P) 
+         <- plus M N P.

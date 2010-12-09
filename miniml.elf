@@ -1,0 +1,44 @@
+% Mini-ML 
+
+% future (s z) --> (s z)
+
+exp : type.  %name exp E x.
+z : exp. 
+s : exp -> exp. 
+case : exp -> exp -> (exp -> exp) -> exp. 
+pair : exp -> exp -> exp. 
+fst : exp -> exp. 
+snd : exp -> exp. 
+lam : (exp -> exp) -> exp. 
+app : exp -> exp -> exp. 
+fix : (exp -> exp) -> exp. 
+future : exp -> exp.
+
+% Judgments 
+eval :    exp -> exp -> type. 
+ev_z :    eval z z.
+ev_s :    eval E V 
+      <-  eval (s E) (s V) 
+ev_case_z : 
+          {E1:exp} {E2:exp} {E3:exp -> exp} {V:exp} 
+          eval (case E1 E2 E3) V 
+      <-  eval E1 z 
+      <-  eval E2 V.
+ev_case_s: 
+          eval (case E1 E2 E3) V 
+      <-  eval E1 (s V1') 
+      <-  eval (E3 V1') V
+ev_pair:  eval (pair E1 E2) (pair V1 V2) 
+      <-  eval E1 V1 
+      <-  eval E2 V2
+ev_fst:   eval (fst E) V1
+      <-  eval E (pair V1 V2).
+ev_snd:   eval (snd E) V2 
+      <-  eval E (pair V1 V2).
+ev_lam:   eval (lam E) (lam E).
+ev_app:   eval (app E1 E2) V 
+      <-  eval E1 (lam E1')
+      <-  eval E2 V2
+      <-  eval (E1' V2) V.
+ev_fix:   eval (fix E) V
+      <-  eval (E (fix E)) V.

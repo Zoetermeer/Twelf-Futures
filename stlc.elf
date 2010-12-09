@@ -1,0 +1,28 @@
+% Representing simply-typed lambda calculus types 
+% TAU ::= unit | TAU1 --> TAU2
+
+tp : type. 
+unit : tp. 
+arrow : tp -> tp -> tp.
+
+
+% Terms: 
+% variables (x), empty tuple, lambda with type annotation, application
+% e ::= x | () | lambda x : TAU.e | e1 e2
+
+term : type. 
+empty : term. 
+app : term -> term -> term 
+lam : tp -> (term -> term) -> term.
+
+% 
+% ---------------------------  of-var
+% GAM,x : TAU,GAM' |- x : TAU
+
+of : term -> tp -> type.
+of-empty : of empty unit. 
+of-lam : of (lam T2 ([x] E x)) (arrow T2 T) 
+        <- ({x:term} of x T2 -> of (E x) T). 
+of-app : of (app E1 E2) T 
+        <- of E1 (arrow T2 T) 
+        <- of E2 T2.
