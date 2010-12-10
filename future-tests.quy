@@ -1,0 +1,5 @@
+% Unit tests for future 
+%query 1 * 
+eval (s (touch (future z))) (s z)
+
+
