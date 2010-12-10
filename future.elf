@@ -2,17 +2,25 @@
 
 % threads is a list of threads in the program. 
 % a thread is an exp * nat pair, where the nat is the future id.
-thread 	: type. 
+thread 	: type. 					%name thread T.
 mkthread : expr -> nat -> thread. 
 threads : type. 
 nothreads : threads.  % empty thread list 
 consthreads : thread -> threads -> threads. 
 
 
-prog : type. 
+prog : type. 						%name prog P.
 mkprog : exps -> threads -> prog. 
-progstep : prog -> prog -> type. 
-exprstep : expr -> threads -> expr -> thread -> type. 
+
+% Judgments ?
+progstep : prog -> prog -> type.  			%name progstep PS.
+estp : expr -> threads -> expr -> thread -> type. 	%name estp EST.
+
+
+estp_s_nt : estp (s E1) nothreads E1' T 
+	<-  estp E1 nothreads E1' T.      
+estp_s_ts : estp E1 (consthreads 
+
 
 % These rules indicate that for a given expression and 
 % thread expression, we can either take a step in evaluating 
@@ -23,5 +31,4 @@ threadstep 	: EM (E0 0)  EM (E0' 0)
 mainstep 	: EM (E0 0) EM' (E0 0) 
 		<- EM EM'	
 
-ev_future : 
-ev_touch : 
+
