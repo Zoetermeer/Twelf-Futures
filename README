@@ -1,0 +1,26 @@
+The goal of the project was to add futures with explicit forcing/touching to 
+Mini-ML.  The files should be pretty self-explanatory, but the meat of the work 
+is in future.elf.  This file contains a small-step semantics for futures, where 
+the presence of futures gives you a nondeterministic ordering of the evaluation steps. 
+
+Basically a program is represented as an expression * threads pair, where 
+threads is a sort of environment containing all the threads created during 
+the lifetime of the program.  If the thread has finished executing (i.e. if it 
+has been evaluated to a value), it sticks around in the environment so that a subsequent 
+touch can receive the value. 
+
+The primary judgment is 'estp', which relates expression * thread state pairs to other 
+expression * thread state pairs.  The judgment is defined inductively with two sets of 
+inference rules - one which defines what the evaluator does if it is going to 
+continue executing the 'current' thread, and the other set defining what happens 
+if we decide to start executing some other thread.  My assumption here is that 
+by defining rules with possibly matching inputs (e.g. estp_cont_s and estp_prpt_s), 
+Twelf will arbitrarily pick one and so hence the nondeterminism.  
+
+While all the rules have been encoded, something isn't quite right - Twelf 
+keeps complaining about the E' output in estp_cont_touchu not being ground.  I'm 
+not seeing what the problem is here - with the tlookup premise, I don't know how 
+E and thus E' couldn't both be regular exps.  Maybe I don't quite understand the concept 
+of ground correctly. 
+
+I've added a few queries in future-tests.quy for some basic unit tests.  
