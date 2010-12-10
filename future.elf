@@ -6,7 +6,7 @@
 
 % A thread is an exp * nat pair, where the nat is the future/thread id.
 thread 	: type. 			  %name thread T.
-mkthread : expr -> nat -> thread. 
+mkthread : exp -> exp -> thread. 
 
 % Thread list 
 threads : type.         %name threads Ts.
@@ -14,11 +14,11 @@ nothreads : threads.
 cth : thread -> threads -> threads. % cth = cons threads
 
 % Gives the next available future/thread ID
-nextdesc        : threads -> nat -> type. 
+nextdesc        : threads -> exp -> type. 
 %mode nextdesc +Ts -M.
 next_empty      : nextdesc nothreads z. 
-next_nonempt_z  : nextdesc ((mkthread E z) Ts) (s z). 
-next_nonempt_s  : nextdesc ((mkthread E (s M)) Ts) (s M).
+next_nonempt_z  : nextdesc (cth (mkthread E z) Ts) (s z). 
+next_nonempt_s  : nextdesc (cth (mkthread E (s M)) Ts) (s M).
 
 % Whether the future has finished evaluation 
 % May not really be necessary, since all we need is a 
@@ -28,7 +28,8 @@ tdone_v         : tdone (mkthread V M) V
                <- value V.
 
 % Look up a future in the list 
-tlookup         : nat -> threads -> thread -> type. 
+tlookup         : exp -> threads -> thread -> type.  
+%mode tlookup +E +Ts -T.
 tlookup_match   : tlookup M (cth (mkthread E M) Ts) (mkthread E M).
 tlookup_recur   : tlookup M (cth (mkthread E M1) Ts) T
                <- tlookup M Ts T 
@@ -40,8 +41,8 @@ mkprog : exp -> threads -> prog.
 
 % Judgments
 progstep : prog -> prog -> type. 
-%mode progstep +P -P.
-estp : expr -> threads -> expr -> threads -> type.
+%mode progstep +P -P'.
+estp : exp -> threads -> exp -> threads -> type.
 %mode estp +E +T -E' -T'.
 
 progstep_noth   : progstep (mkprog E nothreads) (mkprog E' Ts) 
@@ -55,14 +56,13 @@ progstep_th     : progstep (mkprog E Ts) (mkprog E' Ts')
 % or swap in another thread and begin executing there. 
 % The first set of rules covers the cases where we continue executing 
 % on the 'current' thread.
-estp_noth       : estp E nothreads E' nothreads.
 
 % Continue to execute the 'current' thread
 estp_cont_s     : estp (s E) Ts (s E') Ts 
                <- estp E Ts E' Ts.
 estp_cont_case_z: estp (case z E1 E2) Ts (case z E1' E2) Ts
                <- estp E1 Ts E1' Ts.
-estp_cont_case_s: estp (case (s V) E1 E2) Ts (E2 V) 
+estp_cont_case_s: estp (case (s V) E1 E2) Ts (E2 V) Ts 
                <- value V.
 estp_cont_app   : estp (app E1 E2) Ts (app E1' E2) Ts 
                <- estp E1 Ts E1' Ts.
@@ -72,18 +72,14 @@ estp_cont_fix   : estp (fix E) Ts (E (fix E)) Ts.
 estp_cont_future: estp (future E) Ts M (cth (mkthread E M) Ts) 
                <- nextdesc Ts M.
 estp_cont_touch : estp (touch E) Ts (touch E') Ts' 
-               <- estp E Ts E' Ts'
+               <- estp E Ts E' Ts'.
 estp_cont_touchv: estp (touch M) Ts V Ts 
-               <- value V
                <- tlookup M Ts (mkthread V M)
+               <- value V 
                <- value M.
-
-% not correct - can't pass Ts to estp in the second premise, because then the future's 
-% current E will be treated as the current thread E, but we might choose 
-% the same future out of Ts and start executing it instead.  undefined
 estp_cont_touchu: estp (touch M) Ts E' Ts'. 
                <- estp E Ts E' Ts'
-               <- tlookup M Ts (mkthread E M).
+               <- tlookup M Ts (mkthread E M).               
 
 
 % This set of rules covers the cases when we decide to switch to another thread.
@@ -98,6 +94,19 @@ estp_prpt_app   : estp E (cth (mkthread (app E1 E2) M) Ts) E (cth (mkthread (app
 estp_prpt_fix   : estp E (cth (mkthread (fix E) M) Ts) E (cth (mkthread (E (fix E)) M) Ts).
 estp_prpt_future: estp E (cth (mkthread (future E) M1) Ts) E (cth (mkthread E M2) (cth (mkthread M2 M1) Ts))
                <- nextdesc Ts M2.
-estp_prpt_touch : estp E (cth (mkthread (touch M) M1) Ts) E (cth (mkthread (touch M) M1) (cth (mkthread E1' M) Ts)) 
+estp_prpt_touch : estp E (cth (mkthread (touch E1) M) Ts) E (cth (mkthread (touch E1') M) Ts) 
+               <- estp E1 Ts E1' Ts'.
+estp_prpt_touchv: estp E (cth (mkthread (touch M) M1) Ts) E (cth (mkthread (touch M) M1) (cth (mkthread E1' M) Ts)) 
                <- estp E1 Ts E1' Ts' 
-               <- tlookup M Ts (mkthread E1 M).
+               <- tlookup M Ts (mkthread E1 M) 
+               <- value M.
+
+% Top-level evaluation
+eval            : exp -> exp -> type. 
+%mode eval +E -E'.
+eval_v          : eval V V 
+               <- value V. 
+eval_steps      : eval E E'' 
+               <- progstep (mkprog E nothreads) (mkprog E' Ts) 
+               <- eval E' E''.
+

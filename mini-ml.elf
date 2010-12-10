@@ -9,6 +9,6 @@ s    	: exp -> exp.
 case 	: exp -> exp -> (exp -> exp) -> exp.
 lam  	: (exp -> exp) -> exp.
 app  	: exp -> exp -> exp.
-fix  	: (exp -> exp) -> exp
+fix  	: (exp -> exp) -> exp.
 future 	: exp -> exp. 
 touch 	: exp -> exp.

@@ -2,4 +2,11 @@
 %query 1 * 
 eval (s (touch (future z))) (s z)
 
+%query 1 * 
+eval (touch (future (s (s z)))) (s (s z))
 
+%query 1 * 
+eval (future (s z)) z 
+
+%query 1 * 
+eval (touch (future (case z (s z) (s z) z))) (s z)

@@ -1,6 +1,6 @@
 %%% Definition of Values
 
-value : exp -> type.  %name value P.
+value : exp -> type.
 %mode value +V.
 
 val_z     : value z.
@@ -8,4 +8,4 @@ val_lam   : value (lam E).
 val_s     : value (s V)
 	     <- value V.
 
-%worlds () (value D)
+%worlds () (value D).
