@@ -1,34 +1,69 @@
 % p ::= e (e N) ...   (where N ranges over nats) 
 
-% threads is a list of threads in the program. 
-% a thread is an exp * nat pair, where the nat is the future id.
-thread 	: type. 					%name thread T.
+% A thread is an exp * nat pair, where the nat is the future/thread id.
+thread 	: type. 			  %name thread T.
 mkthread : expr -> nat -> thread. 
-threads : type. 
-nothreads : threads.  % empty thread list 
-consthreads : thread -> threads -> threads. 
+threads : type.         %name threads Ts.
 
+% Thread list
+nothreads : threads.
+cth : thread -> threads -> threads. % cth = cons threads
+
+nextdesc        : threads -> nat -> type. 
+%mode nextdesc +Ts -M.
+next_empty      : nextdesc nothreads z. 
+next_nonempt_z  : nextdesc ((mkthread E z) Ts) (s z). 
+next_nonempt_s  : nextdesc ((mkthread E (s M)) Ts) (s M).
 
 prog : type. 						%name prog P.
-mkprog : exps -> threads -> prog. 
+mkprog : exp -> threads -> prog. 
 
-% Judgments ?
-progstep : prog -> prog -> type.  			%name progstep PS.
-estp : expr -> threads -> expr -> thread -> type. 	%name estp EST.
+% Judgments
+progstep : prog -> prog -> type. 
+%mode progstep +P -P.
+estp : expr -> threads -> expr -> threads -> type.
+%mode estp +E +T -E' -T'.
 
-
-estp_s_nt : estp (s E1) nothreads E1' T 
-	<-  estp E1 nothreads E1' T.      
-estp_s_ts : estp E1 (consthreads 
-
+progstep_noth   : progstep (mkprog E nothreads) (mkprog E' Ts) 
+                <- estp E nothreads E' Ts.
+progstep_th     : progstep (mkprog E Ts) (mkprog E' Ts') 
+                <- estp E Ts E' Ts'.
 
 % These rules indicate that for a given expression and 
 % thread expression, we can either take a step in evaluating 
 % the expr on the main thread, or take a step in evaluating 
 % the one on the other thread.
-threadstep 	: EM (E0 0)  EM (E0' 0) 
-		<- E0 E0' 
-mainstep 	: EM (E0 0) EM' (E0 0) 
-		<- EM EM'	
+estp_noth       : estp E nothreads E' nothreads.
 
+% Continue to execute the 'current' thread
+estp_cont_s     : estp (s E) Ts (s E') Ts 
+               <- estp E Ts E' Ts.
+estp_cont_case_z: estp (case z E1 E2) Ts (case z E1' E2) Ts
+               <- estp E1 Ts E1' Ts.
+estp_cont_case_s: estp (case (s V) E1 E2) Ts (E2 V) 
+               <- value V.
+estp_cont_app   : estp (app E1 E2) Ts (app E1' E2) Ts 
+               <- estp E1 Ts E1' Ts.
+estp_cont_fix   : estp (fix E) Ts (E (fix E)) Ts.
+
+% 'future' returns a value (the ID/descriptor of the new future), so the result is M
+estp_cont_future: estp (future E) Ts M (cth (mkthread E M) Ts) 
+               <- nextdesc Ts M.
+
+estp_cont_touch : 
+
+
+% estp_prpt_xxx (prpt = preempt) represents the decision to switch to a different thread
+estp_prpt_s     : estp E (cth (mkthread (s E1) M) Ts) E (cth (mkthread (s E1') M) Ts)
+               <- estp E1 Ts E1' Ts'.
+estp_prpt_case_z: estp E (cth (mkthread (case z E1 E2) M) Ts) E (cth (mkthread (case z E1' E2) M) Ts) 
+               <- estp E1 Ts E1' Ts'. 
+estp_prpt_case_s: estp E (cth (mkthread (case (s V) E1 E2) M) Ts) E (cth (mkthread (E2 V) M) Ts) 
+               <- value V.
+estp_prpt_app   : estp E (cth (mkthread (app E1 E2) M) Ts) E (cth (mkthread (app E1' E2) M) Ts) 
+               <- estp E1 Ts E1' Ts.
+estp_prpt_fix   : estp E (cth (mkthread (fix E) M) Ts) E (cth (mkthread (E (fix E)) M) Ts).
+estp_prpt_future: estp E (cth (mkthread (future E) M1) Ts) E (cth (mkthread E M2) (cth (mkthread M2 M1) Ts))
+               <- nextdesc Ts M2.
+estp_prpt_touch : 
 
